@@ -22,6 +22,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI(c=>c.SwaggerEndpoint("/swagger/v1/swagger.json", "Play.Catalog.Service v1"));
 }
 
+// to make certificate truted : dotnet dev-certs https --trust
+
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
