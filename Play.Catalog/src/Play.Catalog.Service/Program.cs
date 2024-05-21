@@ -1,41 +1,27 @@
+using Microsoft.Extensions.Configuration;
 using Microsoft.OpenApi.Models;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Serializers;
 using MongoDB.Driver;
-using Play.Catalog.Service.Repositories;
-using Play.Catalog.Service.Settings;
+using Play.Catalog.Service.Entities;
+using Play.Common.MongoDB;
+using Play.Common.Repositories;
+using Play.Common.Settings;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-ServiceSettings serviceSettings = builder.
-    Configuration.
-    GetSection(nameof(ServiceSettings)).
-    Get<ServiceSettings>()
-    ?? new ServiceSettings()
-    {
-        ServiceName = "Catalog"
-    };
 
-builder.Services.AddSingleton<IItemsRepository, ItemsRepository>();
 
-builder.Services.AddSingleton(serviceProvider =>
-{
-    var mongoDbSettings = builder.
-    Configuration.
-    GetSection(nameof(MongoDbSettings)).
-    Get<MongoDbSettings>()
-    ?? new MongoDbSettings()
-    {
-        Host = "localhost",
-        Port = "27017"
-    };
-    MongoClient mongoClient = new MongoClient(mongoDbSettings.ConnectionString);
 
-    return mongoClient.GetDatabase(serviceSettings.ServiceName);
-});
+
+ServiceSettings serviceSettings = builder.Configuration.GetSection(nameof(ServiceSettings)).Get<ServiceSettings>() ?? new ServiceSettings();
+
+builder.Services.AddMongo()
+    .AddMongoRepository<Item>("item");
+
 
 builder.Services.AddControllers(options =>
 {
@@ -44,8 +30,7 @@ builder.Services.AddControllers(options =>
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-BsonSerializer.RegisterSerializer(new GuidSerializer(BsonType.String));
-BsonSerializer.RegisterSerializer(new DateTimeOffsetSerializer(BsonType.String));
+
 builder.Services.AddSwaggerGen(c=>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "Play.Catalog.Service", Version = "v1" });
