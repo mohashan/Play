@@ -45,7 +45,7 @@ public class ItemsController : ControllerBase
         var Item = new Item
         {
             CreatedDate = DateTimeOffset.UtcNow,
-            Description = item.Descrition,
+            Description = item.Description,
             Name = item.Name,
             Price = item.Price,
         };
@@ -65,7 +65,7 @@ public class ItemsController : ControllerBase
                 Price = item.Price,
                 CreatedDate = DateTimeOffset.UtcNow,
                 Name = item.Name,
-                Description = item.Descrition,
+                Description = item.Description,
                 Id = Guid.NewGuid(),
             };
             await itemrepository.CreateAsync(newItem);
@@ -74,7 +74,7 @@ public class ItemsController : ControllerBase
         }
 
         existingItem.Name = item.Name;
-        existingItem.Description = item.Descrition;
+        existingItem.Description = item.Description;
         existingItem.Price = item.Price;
 
         await itemrepository.UpdateAsync(existingItem);
