@@ -2,6 +2,7 @@ using Microsoft.OpenApi.Models;
 using Play.Common.MongoDB;
 using Play.Inventory.Service.Clients;
 using Play.Inventory.Service.Entities;
+using Polly;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,7 +20,8 @@ builder.Services.AddMongo()
 builder.Services.AddHttpClient<CatalogClient>(c =>
 {
     c.BaseAddress = new Uri("https://localhost:7065");
-});
+})
+    .AddPolicyHandler(Policy.TimeoutAsync<HttpResponseMessage>(4));
 
 builder.Services.AddControllers(options =>
 {
