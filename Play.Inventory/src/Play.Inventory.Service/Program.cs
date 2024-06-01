@@ -1,4 +1,5 @@
 using Microsoft.OpenApi.Models;
+using Play.Common.MassTransit;
 using Play.Common.MongoDB;
 using Play.Inventory.Service.Clients;
 using Play.Inventory.Service.Entities;
@@ -16,32 +17,11 @@ var builder = WebApplication.CreateBuilder(args);
 //ServiceSettings serviceSettings = builder.Configuration.GetSection(nameof(ServiceSettings)).Get<ServiceSettings>() ?? new ServiceSettings();
 
 builder.Services.AddMongo()
-    .AddMongoRepository<InventoryItem>("inventoryItems");
+    .AddMongoRepository<InventoryItem>("inventoryItems")
+    .AddMongoRepository<CatalogItem>("catalogitems")
+    .AddMassTransitWithRabbitMQ();
 
-Random jitter = new Random();
-
-builder.Services.AddHttpClient<CatalogClient>(c =>
-{
-    c.BaseAddress = new Uri("https://localhost:7065");
-})
-    .AddTransientHttpErrorPolicy(b => b.Or<TimeoutRejectedException>().WaitAndRetryAsync(
-        5, 
-        retryAttemp => TimeSpan.FromSeconds(Math.Pow(2,retryAttemp)) + TimeSpan.FromMilliseconds(jitter.Next(0,1000)),
-        onRetry: (outcome,timespan,retryAttempt) =>
-        {
-            Console.WriteLine($"Delaying for {timespan.TotalSeconds} seconds, then making retry {retryAttempt}");
-        }
-    ))
-    .AddTransientHttpErrorPolicy(b => b.Or<TimeoutRejectedException>().CircuitBreakerAsync(
-        3,
-        TimeSpan.FromSeconds(15),
-        onBreak: (outcome, timespan) =>
-        {
-            Console.WriteLine($"Breaking Circuit for {timespan.TotalSeconds} seconds");
-        },
-        onReset: () => Console.WriteLine($"Closing the Circuit ... ")
-    ))
-    .AddPolicyHandler(Policy.TimeoutAsync<HttpResponseMessage>(4));
+AddCatalogClient(builder);
 
 builder.Services.AddControllers(options =>
 {
@@ -75,3 +55,31 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+static void AddCatalogClient(WebApplicationBuilder builder)
+{
+    Random jitter = new Random();
+
+    builder.Services.AddHttpClient<CatalogClient>(c =>
+    {
+        c.BaseAddress = new Uri("https://localhost:7065");
+    })
+        .AddTransientHttpErrorPolicy(b => b.Or<TimeoutRejectedException>().WaitAndRetryAsync(
+            5,
+            retryAttemp => TimeSpan.FromSeconds(Math.Pow(2, retryAttemp)) + TimeSpan.FromMilliseconds(jitter.Next(0, 1000)),
+            onRetry: (outcome, timespan, retryAttempt) =>
+            {
+                Console.WriteLine($"Delaying for {timespan.TotalSeconds} seconds, then making retry {retryAttempt}");
+            }
+        ))
+        .AddTransientHttpErrorPolicy(b => b.Or<TimeoutRejectedException>().CircuitBreakerAsync(
+            3,
+            TimeSpan.FromSeconds(15),
+            onBreak: (outcome, timespan) =>
+            {
+                Console.WriteLine($"Breaking Circuit for {timespan.TotalSeconds} seconds");
+            },
+            onReset: () => Console.WriteLine($"Closing the Circuit ... ")
+        ))
+        .AddPolicyHandler(Policy.TimeoutAsync<HttpResponseMessage>(4));
+}
