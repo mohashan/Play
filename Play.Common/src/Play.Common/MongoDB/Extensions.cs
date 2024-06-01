@@ -10,7 +10,7 @@ using Play.Common.Repositories;
 
 namespace Play.Common.MongoDB;
 
-public static class RepositoryExtensions
+public static class Extensions
 {
     public static IServiceCollection AddMongo(this IServiceCollection services)
     {

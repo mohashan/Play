@@ -1,12 +1,7 @@
-using Microsoft.Extensions.Configuration;
 using Microsoft.OpenApi.Models;
-using MongoDB.Bson;
-using MongoDB.Bson.Serialization;
-using MongoDB.Bson.Serialization.Serializers;
-using MongoDB.Driver;
 using Play.Catalog.Service.Entities;
+using Play.Common.MassTransit;
 using Play.Common.MongoDB;
-using Play.Common.Repositories;
 using Play.Common.Settings;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -20,7 +15,8 @@ var builder = WebApplication.CreateBuilder(args);
 ServiceSettings serviceSettings = builder.Configuration.GetSection(nameof(ServiceSettings)).Get<ServiceSettings>() ?? new ServiceSettings();
 
 builder.Services.AddMongo()
-    .AddMongoRepository<Item>("item");
+    .AddMongoRepository<Item>("item")
+    .AddMassTransitWithRabbitMQ();
 
 
 builder.Services.AddControllers(options =>
