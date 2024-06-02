@@ -12,6 +12,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 
 
+const string AllowedOrigins = "AllowedOrigins";
 
 
 //ServiceSettings serviceSettings = builder.Configuration.GetSection(nameof(ServiceSettings)).Get<ServiceSettings>() ?? new ServiceSettings();
@@ -44,6 +45,13 @@ if (app.Environment.IsDevelopment())
     app.UseDeveloperExceptionPage();
     app.UseSwagger();
     app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Play.Inventory.Service v1"));
+
+    app.UseCors(c =>
+    {
+        c.WithOrigins(builder.Configuration.GetValue<string>(AllowedOrigins) ?? "AllowedOrigins")
+        .AllowAnyHeader()
+        .AllowAnyMethod();
+    });
 }
 
 // to make certificate truted : dotnet dev-certs https --trust

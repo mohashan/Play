@@ -14,6 +14,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 ServiceSettings serviceSettings = builder.Configuration.GetSection(nameof(ServiceSettings)).Get<ServiceSettings>() ?? new ServiceSettings();
 
+const string AllowedOrigins = "AllowedOrigins";
+
+
 builder.Services.AddMongo()
     .AddMongoRepository<Item>("item")
     .AddMassTransitWithRabbitMQ();
@@ -27,19 +30,27 @@ builder.Services.AddControllers(options =>
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 
-builder.Services.AddSwaggerGen(c=>
+builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "Play.Catalog.Service", Version = "v1" });
 });
 
 var app = builder.Build();
 
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
+
     app.UseDeveloperExceptionPage();
     app.UseSwagger();
-    app.UseSwaggerUI(c=>c.SwaggerEndpoint("/swagger/v1/swagger.json", "Play.Catalog.Service v1"));
+    app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Play.Catalog.Service v1"));
+    app.UseCors(c =>
+    {
+        c.WithOrigins(builder.Configuration.GetValue<string>(AllowedOrigins) ?? "AllowedOrigins")
+        .AllowAnyHeader()
+        .AllowAnyMethod();
+    });
 }
 
 // to make certificate truted : dotnet dev-certs https --trust
